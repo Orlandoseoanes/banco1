@@ -1,83 +1,151 @@
-const router =require("express").Router()
-const bcrypt = require('bcrypt');
-const modelosUsuario=require('../app/models/modeloUser')
-const jwt = require('jsonwebtoken'); // Importa la biblioteca jsonwebtoken
+const router = require("express").Router();
+const bcrypt = require("bcrypt");
+const modelosUsuario = require("../app/models/modeloUser");
+const jwt = require("jsonwebtoken"); // Importa la biblioteca jsonwebtoken
 const { Router } = require("express");
 
-
 //REGISTRO USUARIO
-router.post('/Usuario/Registro', async (req, res) => {
+router.post("/Usuario/Registro", async (req, res) => {
   const { cedula, nombre, apellido, usuario, contrasena } = req.body;
 
   // Validación para la Cédula
   if (!isValidCedula(cedula)) {
-      return res.status(400).json({
-          message: 'Cédula no válida. Debe ser un número entre 10000 y 9999999999.'
-      });
+    return res.status(400).json({
+      message: "Cédula no válida. Debe ser un número entre 10000 y 9999999999.",
+    });
   }
 
   // Validación para el Nombre
   if (!isValidNombre(nombre)) {
-      return res.status(400).json({
-          message: 'Nombre no válido. Debe tener entre 5 y 50 caracteres.'
-      });
+    return res.status(400).json({
+      message: "Nombre no válido. Debe tener entre 5 y 50 caracteres.",
+    });
   }
 
   // Validación para el Apellido
   if (!isValidApellido(apellido)) {
-      return res.status(400).json({
-          message: 'Apellido no válido. Debe tener entre 5 y 50 caracteres.'
-      });
+    return res.status(400).json({
+      message: "Apellido no válido. Debe tener entre 5 y 50 caracteres.",
+    });
   }
 
   // Validación para el Usuario
   if (!isValidUsuario(usuario)) {
-      return res.status(400).json({
-          message: 'Usuario no válido. Debe tener entre 5 y 50 caracteres.'
-      });
+    return res.status(400).json({
+      message: "Usuario no válido. Debe tener entre 5 y 50 caracteres.",
+    });
   }
 
   // Validación para la Contraseña
   if (!isValidContrasena(contrasena)) {
-      return res.status(400).json({
-          message: 'Contraseña no válida. Debe tener entre 5 y 50 caracteres.'
-      });
+    return res.status(400).json({
+      message: "Contraseña no válida. Debe tener entre 5 y 50 caracteres.",
+    });
   }
 
- 
   try {
-      const newUsuario = await modelosUsuario.create({
-          cedula,
-          nombre,
-          apellido,
-          usuario,
-          contrasena,
-          numero_de_cuenta:generarNumeroDeCuenta(),
-          saldo:1000,
-          estado: 'offline' 
-      });
-      res.status(201).json({
-          message: 'Usuario creado exitosamente',
-          usuario: newUsuario,
-      });
+    const newUsuario = await modelosUsuario.create({
+      cedula,
+      nombre,
+      apellido,
+      usuario,
+      contrasena,
+      numero_de_cuenta: generarNumeroDeCuenta(),
+      saldo: 1000,
+      estado: "offline",
+    });
+    res.status(201).json({
+      message: "Usuario creado exitosamente",
+      usuario: newUsuario,
+    });
   } catch (error) {
-      console.error(error);
-      res.status(500).json({
-          message: 'Error al crear usuario',
-          error,
-      });
+    console.error(error);
+    res.status(500).json({
+      message: "Error al crear usuario",
+      error,
+    });
   }
 });
 
+router.post("/Usuario/nequi/Registro", async (req, res) => {
+  const { cedula, nombre, apellido, usuario, contrasena, numerotelefono } =
+    req.body;
+
+  // Validación para la Cédula
+  if (!isValidCedula(cedula)) {
+    return res.status(400).json({
+      message: "Cédula no válida. Debe ser un número entre 10000 y 9999999999.",
+    });
+  }
+
+  // Validación para el Nombre
+  if (!isValidNombre(nombre)) {
+    return res.status(400).json({
+      message: "Nombre no válido. Debe tener entre 5 y 50 caracteres.",
+    });
+  }
+
+  // Validación para el Apellido
+  if (!isValidApellido(apellido)) {
+    return res.status(400).json({
+      message: "Apellido no válido. Debe tener entre 5 y 50 caracteres.",
+    });
+  }
+
+  // Validación para el Usuario
+  if (!isValidUsuario(usuario)) {
+    return res.status(400).json({
+      message: "Usuario no válido. Debe tener entre 5 y 50 caracteres.",
+    });
+  }
+
+  // Validación para la Contraseña
+  if (!isValidContrasena(contrasena)) {
+    return res.status(400).json({
+      message: "Contraseña no válida. Debe tener entre 5 y 50 caracteres.",
+    });
+  }
+
+  if (!isValidNumero(numerotelefono)) {
+    return res.status(400).json({
+      message: "numero  no válido. Debe tener 10 caracteres",
+    });
+  }
+
+  const nuevonumero = "0" + numerotelefono;
+  console.log(nuevonumero);
+  try {
+    const newUsuario = await modelosUsuario.create({
+      cedula,
+      nombre,
+      apellido,
+      usuario,
+      contrasena,
+      numero_de_cuenta: nuevonumero,
+      saldo: 1000,
+      estado: "offline",
+    });
+    res.status(201).json({
+      message: "Usuario creado exitosamente",
+      usuario: newUsuario,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Error al crear usuario",
+      error,
+    });
+  }
+});
 
 //login
-router.post('/login', async (req, res) => {
+router.post("/login", async (req, res) => {
   const { usuario, contrasena } = req.body;
 
   // Validación de entradas
-  if (!usuario || !contrasena ) {
+  if (!usuario || !contrasena) {
     return res.status(400).json({
-      message: 'Usuario, contraseña y clave dinámica son requeridos.',
+      message: "Usuario, contraseña y clave dinámica son requeridos.",
     });
   }
 
@@ -89,7 +157,7 @@ router.post('/login', async (req, res) => {
 
     if (!usuarioEncontrado) {
       return res.status(401).json({
-        message: 'Usuario no encontrado.',
+        message: "Usuario no encontrado.",
       });
     }
 
@@ -98,11 +166,9 @@ router.post('/login', async (req, res) => {
 
     if (!esValido) {
       return res.status(401).json({
-        message: 'Contraseña incorrecta.',
+        message: "Contraseña incorrecta.",
       });
     }
-
-  
 
     // Generar token
     const payload = {
@@ -114,33 +180,30 @@ router.post('/login', async (req, res) => {
       saldo: usuarioEncontrado.saldo,
     };
 
-    const token = jwt.sign(payload, 'clave', { expiresIn: '1h' });
-
-    
+    const token = jwt.sign(payload, "clave", { expiresIn: "1h" });
 
     res.status(200).json({
-      message: 'Inicio de sesión exitoso.',
+      message: "Inicio de sesión exitoso.",
       status: 200,
       token,
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({
-      message: 'Error al iniciar sesión.',
+      message: "Error al iniciar sesión.",
       error: error.message,
     });
   }
 });
 
-
 //generar numero de cuenta
 function generarNumeroDeCuenta() {
-    let numeroDeCuenta = '';
-    for (let i = 0; i < 11; i++) {
-        const digitoAleatorio = Math.floor(Math.random() * 10);
-        numeroDeCuenta += digitoAleatorio;
-    }
-    return numeroDeCuenta;
+  let numeroDeCuenta = "";
+  for (let i = 0; i < 11; i++) {
+    const digitoAleatorio = Math.floor(Math.random() * 10);
+    numeroDeCuenta += digitoAleatorio;
+  }
+  return numeroDeCuenta;
 }
 // Función para validar la Cédula
 function isValidCedula(cedula) {
@@ -149,22 +212,38 @@ function isValidCedula(cedula) {
 
 // Función para validar el Nombre
 function isValidNombre(nombre) {
-  return typeof nombre === 'string' && nombre.length >= 5 && nombre.length <= 50;
+  return (
+    typeof nombre === "string" && nombre.length >= 5 && nombre.length <= 50
+  );
 }
 
 // Función para validar el Apellido
 function isValidApellido(apellido) {
-  return typeof apellido === 'string' && apellido.length >= 5 && apellido.length <= 50;
+  return (
+    typeof apellido === "string" &&
+    apellido.length >= 5 &&
+    apellido.length <= 50
+  );
 }
 
 // Función para validar el Usuario
 function isValidUsuario(usuario) {
-  return typeof usuario === 'string' && usuario.length >= 5 && usuario.length <= 50;
+  return (
+    typeof usuario === "string" && usuario.length >= 5 && usuario.length <= 50
+  );
 }
 
 // Función para validar la Contraseña
 function isValidContrasena(contrasena) {
-  return typeof contrasena === 'string' && contrasena.length >= 5 && contrasena.length <= 50;
+  return (
+    typeof contrasena === "string" &&
+    contrasena.length >= 5 &&
+    contrasena.length <= 50
+  );
 }
 
-module.exports=router;
+function isValidNumero(telefono) {
+  // Asegurarse de que el teléfono es un número y tiene exactamente 10 dígitos
+  return /^\d{10}$/.test(telefono);
+}
+module.exports = router;
