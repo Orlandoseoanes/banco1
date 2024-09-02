@@ -2,6 +2,7 @@ const router = require("express").Router();
 const { Router } = require("express");
 const modeloclavedinamica = require("../app/models/modeloDinamica");
 const Usuario = require("../app/models/modeloUser");
+const { where } = require("sequelize");
 
 router.get("/generarClave/:cedula", async (req, res) => {
   try {
@@ -45,7 +46,6 @@ router.get("/RetirarDinero/:cedula/:cantidadRetirar", async (req, res) => {
     const { cedula } = req.params;
     const cantidadRetirar = parseInt(req.params.cantidadRetirar, 10); // Convertir a número entero
 
-
     // Buscar el usuario por su clave primaria (cédula)
     const usuarioEncontrado = await Usuario.findByPk(cedula);
 
@@ -65,20 +65,76 @@ router.get("/RetirarDinero/:cedula/:cantidadRetirar", async (req, res) => {
       await usuarioEncontrado.save();
       const contadorBilletes = contarBilletes(billetesRepartidos);
 
-      return res
-        .status(200)
-        .json({
-          message: "Retiro exitoso",
-          billetes: billetesRepartidos,
-          contadorBilletes,
-          saldo: usuarioEncontrado.saldo,
-        });
+      return res.status(200).json({
+        message: "Retiro exitoso",
+        billetes: billetesRepartidos,
+        contadorBilletes,
+        saldo: usuarioEncontrado.saldo,
+      });
     }
   } catch (error) {
     console.error("Error al retirar dinero:", error);
     res.status(500).json({ message: "Error al retirar dinero" });
   }
 });
+
+router.get(
+  "/Transferir/:numerocuentausuario/:cantidad/:numerodestinatario",
+  async (req, res) => {
+    try {
+      const { numerocuentausuario, numerodestinatario } = req.params;
+      const cantidad = parseInt(req.params.cantidad, 10); // Convertir a número entero
+
+      const usuarioEncontrado = await Usuario.findOne({
+        where: {
+          numero_de_cuenta: numerocuentausuario,
+        },
+      });
+
+      const destinatarioEncontrado = await Usuario.findOne({
+        where: {
+          numero_de_cuenta: numerodestinatario,
+        },
+      });
+
+      if (usuarioEncontrado && destinatarioEncontrado) {
+        if (cantidad > usuarioEncontrado.saldo) {
+          return res
+            .status(400)
+            .json({ message: "No hay suficiente dinero en la cuenta" });
+        } else {
+          usuarioEncontrado.saldo =
+            parseFloat(usuarioEncontrado.saldo) - cantidad;
+          await usuarioEncontrado.save();
+
+          destinatarioEncontrado.saldo =
+            parseFloat(destinatarioEncontrado.saldo) + cantidad;
+          await destinatarioEncontrado.save();
+
+          // Registro detallado en la consola
+          console.log("Saldo del destinatario:", destinatarioEncontrado.saldo);
+          console.log("Datos del remitente:", usuarioEncontrado.toJSON());
+
+          return res.status(200).json({
+            message: "Transferencia exitosa",
+            saldo: usuarioEncontrado.saldo,
+            destinatario:
+              destinatarioEncontrado.nombre +
+              " " +
+              destinatarioEncontrado.apellido,
+          });
+        }
+      } else {
+        return res
+          .status(404)
+          .json({ message: "Usuario no existe o destinatario no encontrado" });
+      }
+    } catch (e) {
+      console.error("Error al transferir dinero:", e);
+      res.status(500).json({ message: "Error al transferir dinero" });
+    }
+  }
+);
 
 function repartirBilletes(cantidad) {
   const billetes = [10000, 20000, 50000, 100000];
@@ -105,31 +161,27 @@ function repartirBilletes(cantidad) {
   return billetesRepartidos;
 }
 
-
 function contarBilletes(billetes) {
-    const contadorBilletes = {
-        100000: 0,
-        50000: 0,
-        20000: 0,
-        10000: 0
-    };
+  const contadorBilletes = {
+    100000: 0,
+    50000: 0,
+    20000: 0,
+    10000: 0,
+  };
 
-    billetes.forEach(billete => {
-        if (contadorBilletes[billete] !== undefined) {
-            contadorBilletes[billete]++;
-        }
-    });
+  billetes.forEach((billete) => {
+    if (contadorBilletes[billete] !== undefined) {
+      contadorBilletes[billete]++;
+    }
+  });
 
-    return contadorBilletes;
+  return contadorBilletes;
 }
 
-// Genera una clave dinámica (aquí podrías usar alguna librería o lógica específica)
 const generarClaveDinamica = () => {
-  // Lógica para generar clave dinámica, por ejemplo:
-  return Math.floor(100000 + Math.random() * 999999); // Genera un número de 6 dígitos aleatorio
+  return Math.floor(100000 + Math.random() * 999999);
 };
 
-// Función para calcular la fecha de expiración (ejemplo: 5 minutos después)
 const calcularFechaExpiracion = () => {
   const expiresAt = new Date();
   expiresAt.setMinutes(expiresAt.getMinutes() + 5);
