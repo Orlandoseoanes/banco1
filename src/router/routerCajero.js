@@ -72,10 +72,7 @@ router.get("/cajero/validacion/:cuenta/:contrasena", async (req, res) => {
 });
 
 //fase 3: validacion fondos insuficientes y retiro
-
-router.get(
-  "/cajero/retiro/:cuenta/:Cantidad_a_retirar/:dinamica",
-  async (req, res) => {
+router.get("/cajero/retiro/:cuenta/:Cantidad_a_retirar/:dinamica",async (req, res) => {
     try {
       const { cuenta, dinamica } = req.params;
       const cantidadRetirar = parseInt(req.params.Cantidad_a_retirar, 10); // Convertir a número entero
@@ -88,34 +85,42 @@ router.get(
 
       if (!user) {
         return res.status(404).json({ message: "Cuenta no existe" });
-      } else {
-        if (cantidadRetirar > user.saldo) {
-          return res.status(401).json({ message: "fondos insuficientes" });
-        } else {
-          const clavedinamica = await modeloclavedinamica.findOne({
-            where: { usuarioId: user.cedula },
-          });
-
-          if (dinamica == clavedinamica.clave) {
-            if (clavedinamica.expiresAt < Date.now) {
-              return res.status(401).json({ message: "clave expirada" });
-            } else {
-              const billetesRepartidos = repartirBilletes(cantidadRetirar);
-
-              user.saldo = user.saldo - cantidadRetirar;
-              await user.save();
-              const contadorBilletes = contarBilletes(billetesRepartidos);
-
-              return res.status(200).json({
-                message: "Retiro exitoso",
-                billetes: billetesRepartidos,
-                contadorBilletes,
-                saldo: user.saldo,
-              });
-            }
-          }
-        }
       }
+
+      if (cantidadRetirar > user.saldo) {
+        return res.status(401).json({ message: "Fondos insuficientes" });
+      }
+
+      const clavedinamica = await ClaveDinamicas.findOne({
+        where: { usuarioId: user.cedula },
+      });
+
+      if (!clavedinamica) {
+        return res.status(404).json({ message: "Clave dinámica no encontrada" });
+      }
+
+      if (dinamica !== clavedinamica.clave) {
+        return res.status(401).json({ message: "Clave dinámica incorrecta" });
+      }
+
+      if (clavedinamica.expiresAt < Date.now()) {
+        return res.status(401).json({ message: "Clave expirada" });
+      }
+
+      // Repartir billetes y actualizar saldo
+      const billetesRepartidos = repartirBilletes(cantidadRetirar);
+      user.saldo = user.saldo - cantidadRetirar;
+      await user.save();
+
+      const contadorBilletes = contarBilletes(billetesRepartidos);
+
+      return res.status(200).json({
+        message: "Retiro exitoso",
+        billetes: billetesRepartidos,
+        contadorBilletes,
+        saldo: user.saldo,
+      });
+
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
