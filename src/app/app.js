@@ -9,9 +9,11 @@ const cors = require('cors');
 var path = require('path');
 /////////
 const routerUser =require ('../router/routerUsuario');
-const routerDinamica=require("../router/routerDinamico")
+const routerDinamica=require("../router/routerDinamico");
+const routerCajero=require("../router/routerCajero");
 
 /////
+
 app.use(morgan("dev"));
 app.get('/', (req, res) => {
     res.send('express');
@@ -21,8 +23,9 @@ app.use('/MEDIA', express.static(path.join(__dirname, 'MEDIA')));
 app.use(cors(config.application.cors.server));
 
 
-app.use("/API/V2", routerUser); // Corrected mounting paths
-app.use("/API/V2", routerDinamica); // Corrected mounting paths
+app.use("/API/V2", routerUser); 
+app.use("/API/V2", routerDinamica); 
+app.use("/API/V2", routerCajero); 
 
 
 

@@ -2,7 +2,6 @@ const router = require("express").Router();
 const { Router } = require("express");
 const modeloclavedinamica = require("../app/models/modeloDinamica");
 const Usuario = require("../app/models/modeloUser");
-const { where } = require("sequelize");
 
 router.get("/generarClave/:cedula", async (req, res) => {
   try {
