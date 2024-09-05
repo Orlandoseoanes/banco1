@@ -196,6 +196,72 @@ router.post("/login", async (req, res) => {
   }
 });
 
+//login nequi
+router.post("/login/nequi", async (req, res) => {
+  const { telefono, contrasena } = req.body;
+
+  // Validación de entradas
+  if (!telefono || !contrasena) {
+    return res.status(400).json({
+      message: "telefono, contraseña  son requeridos.",
+    });
+  }
+
+  const telefono2 = "0" + telefono;
+
+  try {
+    // Buscar el usuario por nombre de usuario
+    const usuarioEncontrado = await modelosUsuario.findOne({
+      where: { numero_de_cuenta: telefono2 },
+    });
+
+
+
+    if (!usuarioEncontrado) {
+      return res.status(401).json({
+        message: "Usuario no encontrado.",
+      });
+    }
+
+    // Verificar la contraseña
+    const esValido = await usuarioEncontrado.comparePassword(contrasena);
+
+    if (!esValido) {
+      return res.status(401).json({
+        message: "Contraseña incorrecta.",
+      });
+    }
+
+    // Generar token
+    const payload = {
+      cedula: usuarioEncontrado.cedula,
+      nombre: usuarioEncontrado.nombre,
+      apellido: usuarioEncontrado.apellido,
+      usuario: usuarioEncontrado.usuario,
+      numero_de_cuenta: usuarioEncontrado.numero_de_cuenta,
+      saldo: usuarioEncontrado.saldo,
+    };
+
+    const token = jwt.sign(payload, "clave", { expiresIn: "1h" });
+
+    res.status(200).json({
+      message: "Inicio de sesión exitoso.",
+      status: 200,
+      token,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Error al iniciar sesión.",
+      error: error.message,
+    });
+  }
+});
+
+
+
+
+
 
 
 //generar numero de cuenta
