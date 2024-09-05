@@ -77,9 +77,7 @@ router.get("/RetirarDinero/:cedula/:cantidadRetirar", async (req, res) => {
   }
 });
 
-router.get(
-  "/Transferir/:numerocuentausuario/:cantidad/:numerodestinatario",
-  async (req, res) => {
+router.get("/Transferir/:numerocuentausuario/:cantidad/:numerodestinatario",async (req, res) => {
     try {
       const { numerocuentausuario, numerodestinatario } = req.params;
       const cantidad = parseInt(req.params.cantidad, 10); // Convertir a número entero
@@ -154,6 +152,68 @@ router.get("/actualizarfondos/:numero_de_cuenta", async (req, res) => {
 });
 
 
+//jailer retiro
+router.get("/RetirarDinero/nequi/:cedula/:cantidadRetirar", async (req, res) => {
+  try {
+    const { cedula } = req.params;
+    const cantidadRetirar = parseInt(req.params.cantidadRetirar, 10); // Convertir a número entero
+
+    // Buscar el usuario por su clave primaria (cédula)
+    const usuarioEncontrado = await Usuario.findByPk(cedula);
+
+    if (!usuarioEncontrado) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    const dinerodisponible = usuarioEncontrado.saldo;
+    if (cantidadRetirar > dinerodisponible) {
+      return res
+        .status(400)
+        .json({ message: "No hay suficiente dinero en la cuenta" });
+    } else {
+      const billetesRepartidos = repartirBilletesjailer(cantidadRetirar);
+
+      usuarioEncontrado.saldo = usuarioEncontrado.saldo - cantidadRetirar;
+      await usuarioEncontrado.save();
+      const contadorBilletes = contarBilletes(billetesRepartidos);
+
+      return res.status(200).json({
+        message: "Retiro exitoso",
+        billetes: billetesRepartidos,
+        contadorBilletes,
+        saldo: usuarioEncontrado.saldo,
+      });
+    }
+  } catch (error) {
+    console.error("Error al retirar dinero:", error);
+    res.status(500).json({ message: "Error al retirar dinero" });
+  }
+});
+
+
+//funcion jailer
+function repartirBilletesjailer(cantidad) {
+  const billetes = [10000, 20000, 50000, 100000];
+  let suma = 0;
+  let billetesRepartidos = [];
+
+  for (let vuelta = 0; suma < cantidad; vuelta++) {
+    for (let i = 0; i < billetes.length && suma < cantidad; i++) {
+      let indiceActual = (i + vuelta) % billetes.length;
+
+      if (suma + billetes[indiceActual] <= cantidad) {
+        suma += billetes[indiceActual];
+        billetesRepartidos.push(billetes[indiceActual]);
+      }
+    }
+  }
+
+  return billetesRepartidos;
+}
+
+
+
+//funcion mia
 function repartirBilletes(cantidad) {
   const billetes = [10000, 20000, 50000, 100000];
   let suma = 0;
