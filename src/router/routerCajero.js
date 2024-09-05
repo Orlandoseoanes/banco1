@@ -1,6 +1,5 @@
 const router = require("express").Router();
 const { Router } = require("express");
-const modeloclavedinamica = require("../app/models/modeloDinamica");
 const modelousuario = require("../app/models/modeloUser");
 const ClaveDinamicas = require("../app/models/modeloDinamica");
 //fase 1: valida que cuenta exista en nequi o bancolombia

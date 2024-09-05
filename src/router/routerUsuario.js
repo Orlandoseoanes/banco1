@@ -39,7 +39,7 @@ router.post("/Usuario/Registro", async (req, res) => {
   // Validación para la Contraseña
   if (!isValidContrasena(contrasena)) {
     return res.status(400).json({
-      message: "Contraseña no válida. Debe tener entre 5 y 50 caracteres.",
+      message: "Contraseña no válida. Debe tener 4 caracteres.",
     });
   }
 
@@ -196,6 +196,8 @@ router.post("/login", async (req, res) => {
   }
 });
 
+
+
 //generar numero de cuenta
 function generarNumeroDeCuenta() {
   let numeroDeCuenta = "";
@@ -237,8 +239,7 @@ function isValidUsuario(usuario) {
 function isValidContrasena(contrasena) {
   return (
     typeof contrasena === "string" &&
-    contrasena.length >= 5 &&
-    contrasena.length <= 50
+    contrasena.length == 4
   );
 }
 
