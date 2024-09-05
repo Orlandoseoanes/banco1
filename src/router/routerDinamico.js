@@ -135,6 +135,25 @@ router.get(
   }
 );
 
+//actualizar fondos
+
+router.get("/actualizarfondos/:numero_de_cuenta", async (req, res) => {
+  try {
+    const { numero_de_cuenta } = req.params;
+    const usuarioEncontrado = await Usuario.findOne({ where: { numero_de_cuenta: numero_de_cuenta } });
+
+    if (!usuarioEncontrado) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    } else {
+      return res.status(200).json({ saldo: usuarioEncontrado.saldo });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Error del servidor" });
+  }
+});
+
+
 function repartirBilletes(cantidad) {
   const billetes = [10000, 20000, 50000, 100000];
   let suma = 0;
